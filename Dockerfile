@@ -1,36 +1,27 @@
-FROM logstash:5.4.1
+FROM logstash:5.6.5
 
-MAINTAINER Guillaume Simonneau <simonneaug@gmail.com>
-
-LABEL Description="logstash elasticsearch http_poller exec"
+LABEL Description="kafka spliter configuration"
 
 # install plugin dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		apt-transport-https \
-		libzmq3 \
-    curl \
-	&& rm -rf /var/lib/apt/lists/*
+    	curl \
+		&& rm -rf /var/lib/apt/lists/*
 
-# Plugins
-RUN /usr/share/logstash/bin/logstash-plugin install logstash-input-http_poller
-RUN /usr/share/logstash/bin/logstash-plugin install logstash-input-exec
-RUN /usr/share/logstash/bin/logstash-plugin install logstash-filter-json_encode
-
+#FFU
 ADD ./src/ /run/
 RUN chmod +x -R /run/
 
-COPY ./conf.d /.backup/logstash/conf.d
-RUN rm -f /etc/logstash/conf.d/logstash.conf
+COPY ./conf.d /etc/logstash/conf.d/splitter.conf
 
 VOLUME /etc/logstash/conf.d
 
 EXPOSE 5000
 
-ENV LOGSTASH_PWD="changeme" \
-    ELASTICSEARCH_HOST="elasticsearch" \
-    ELASTICSEARCH_PORT="9200" \
-    HEAP_SIZE="1g" \
-    TS_PWD="changeme"
+ENV ORDERS_KAFKA_HOST="34.248.173.194" \
+    SPLIT_KAFKA_HOST="34.248.173.194" \
+    KAFK_PORT="9092" \
+    HEAP_SIZE="1g" 
 
-ENTRYPOINT ["/run/entrypoint.sh"]
-CMD ["logstash", "-f /etc/logstash/conf.d/logstash.conf", "--config.reload.automatic"]
+
+CMD ["logstash", "-f /etc/logstash/conf.d/splitter.conf", "--config.reload.automatic", "--debug"]
