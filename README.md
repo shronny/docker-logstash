@@ -40,14 +40,14 @@ You can set it permanently by modifying `vm.max_map_count` setting in your `/etc
 ##### HEAP_SIZE | `1g`
 Defines the maximum memory allocated to logstash.
 
-##### LOGSTASH_PWD | `changeme`
-password for elasticsearch built-in user *logstash*.
+##### ORDERS_KAFKA_HOST | `Orders kafka host `
+kafka host that handle topic orders hostname.
 
-##### ELASTICSEARCH_HOST | `elasticsearch`
-Elasticsearch hostname.
+##### SPLIT_KAFKA_HOST | `Orders kafka host `
+kafka host that handle splitter topics.
 
-##### ELASTICSEARCH_PORT | `9200`
-Elasticsearch port.
+##### KAFKA_PORT | `9092`
+kafka port.
 
 # Splitter config
 
@@ -100,7 +100,7 @@ output {
     kafka {
         topic_id => "orders"
         #should come from system variable
-        bootstrap_servers => "${KAFKA_HOST}:${KAFKA_PORT}"
+        bootstrap_servers => "${ORDERS_KAFKA_HOST}:${ORDERS_KAFKA_PORT}"
         }
   }
   if [type] == "items" {
@@ -117,7 +117,7 @@ output {
 
 # Configure Logstash
 
-Configuration file is located in `/etc/logstash/logstash.conf` if you follow the same volume mapping as in docker-compose examples above.
+Configuration file is located in `/etc/logstash/splitter.conf` if you follow the same volume mapping as in docker-compose examples above.
 
 You can find default config [there](https://github.com/Khezen/docker-logstash/blob/master/config/logstash.conf).
 
