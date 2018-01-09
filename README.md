@@ -1,14 +1,21 @@
-[![](https://images.microbadger.com/badges/image/khezen/logstash.svg)](https://hub.docker.com/r/khezen/logstash/)
-# Supported tags and respective `Dockerfile` links
-
-* `2.4.1`, `2.4`, `2` [(2.4/Dockerfile)](https://github.com/Khezen/docker-logstash/blob/2.4/Dockerfile)
-* `5.1.2`, `5.1` [(5.1/Dockerfile)](https://github.com/Khezen/docker-logstash/blob/5.1/Dockerfile)
-* `5.2.2`, `5.2` [(5.2/Dockerfile)](https://github.com/Khezen/docker-logstash/blob/5.2/Dockerfile)
-* `5.3.2`, `5.3` [(5.3/Dockerfile)](https://github.com/Khezen/docker-logstash/blob/5.3/Dockerfile)
-* `5.4.1`, `5.4`, `5`, `latest` [(5.4/Dockerfile)](https://github.com/Khezen/docker-logstash/blob/5.4/Dockerfile)
+[![](https://images.microbadger.com/badges/image/khezen/logstash.svg)](https://hub.docker.com/r/khezen/logstash/) - inspirde by https://hub.docker.com/r/khezen/logstash/
 
 # What is logstash?
 Logstash is an open source, server-side data processing pipeline that ingests data from a multitude of sources simultaneously, transforms it, and then sends it to your favorite “stash.” (Elasticsearch for example.)
+
+# What is Kafka splitter configuation?
+Kafka Splitter configuration read data from specific topic and send it to splitted topics according to filed from the message itself.
+
+# What message type is splitter support?
+the configuration support the follwing messages:
+```
+{
+    "mid":1,
+    "desk":"tshirt"
+}
+
+```
+splitter configuration will create (and send) the data to topic according to mid filed
 
 [<img src="https://static-www.elastic.co/fr/assets/blt946bc636d34a70eb/icon-logstash-bb.svg?q=600" width="144" height="144">](https://www.elastic.co/fr/products/logstash)
 
@@ -17,10 +24,8 @@ Logstash is an open source, server-side data processing pipeline that ingests da
 ## docker engine
 
 ```
-docker run -d -p 5000:5000 - p 5001:5001 khezen/logstash:latest   
+docker run -d -p 5000:5000 - p 5001:5001 shronny/logstash:latest   
 ```
-
-## docker-compose
 
 ### [File Descriptors and MMap](https://www.elastic.co/guide/en/elasticsearch/guide/current/_file_descriptors_and_mmap.html)
 
@@ -30,77 +35,6 @@ sysctl -w vm.max_map_count=262144
 ```
 You can set it permanently by modifying `vm.max_map_count` setting in your `/etc/sysctl.conf`.
 
-### docker-compose.yml
-```
-version: '2'
-services:
-    logstash:
-        image: khezen/logstash:5
-        environment:
-            LOGSTASH_PWD: heizenberg
-            ELASTICSEARCH_HOST: elasticsearch
-            ELASTICSEARCH_PORT: 9200
-        volumes:
-            - /etc/logstash:/etc/logstash/conf.d
-        ports:
-             - "5000:5000"
-             - "5001:5001"
-        network_mode: bridge
-        restart: always
-```
-
-or
-
-```
-version: '2'
-services:
-    elasticsearch:
-        image: khezen/elasticsearch
-        environment:
-            ELASTIC_PWD: changeme
-            KIBANA_PWD: brucewayne
-            LOGSTASH_PWD: heizenberg
-        volumes:
-            - /data/elasticsearch:/usr/share/elasticsearch/data
-            - /etc/elasticsearch:/usr/share/elasticsearch/config
-        ports:
-             - "9200:9200"
-             - "9300:9300"
-        network_mode: bridge
-        restart: always
-
-    kibana:
-        links:
-            - elasticsearch
-        image: khezen/kibana
-        environment:
-            KIBANA_PWD: brucewayne
-            ELASTICSEARCH_HOST: elasticsearch
-            ELASTICSEARCH_PORT: 9200
-        volumes:
-            - /etc/kibana:/etc/kibana
-        ports:
-             - "5601:5601"
-        network_mode: bridge
-        restart: always
-
-    logstash:
-        links:
-            - elasticsearch
-        image: khezen/logstash:5
-        environment:
-            LOGSTASH_PWD: heizenberg
-            ELASTICSEARCH_HOST: elasticsearch
-            ELASTICSEARCH_PORT: 9200
-        volumes:
-            - /etc/logstash:/etc/logstash/conf.d
-        ports:
-             - "5000:5000"
-             - "5001:5001"
-        network_mode: bridge
-        restart: always
-
-```
 # Environment Variables
 
 ##### HEAP_SIZE | `1g`
@@ -115,39 +49,69 @@ Elasticsearch hostname.
 ##### ELASTICSEARCH_PORT | `9200`
 Elasticsearch port.
 
-# Default config
+# Splitter config
 
 ```
+#########
+#       #
+# INPUT #
+#       #
+#########
 input {
-	tcp {
-		port => 5000
-		codec => "json"
-	}
-	udp {
-		port => 5001
-		codec => "json"
-	}
+  # for testing its possible to add line to this specific file
+  file {
+    path => "/tmp/input.data"
+    start_position => "beginning"
+    type => "Orders"
+    sincedb_path => "/tmp/files/sincedb.log"
+  }
+  # This consumenr set to get the data from the main topic  - orders
+  kafka {
+        topics => "orders"
+        type => "items"
+        #should come from system variable
+        bootstrap_servers => "${ORDERS_KAFKA_HOST}:${ORDERS_KAFKA_PORT}"
+  }
 }
 
+##########
+#        #
+# Filter #
+#        #
+##########
 filter {
-	date {
-		match => [ "timestamp", "dd/MMM/YYYY:HH:mm:ss Z" ]
-	}
-	geoip {
-    	source => "clientip"
- 	}
-  	useragent {
-    	source => "agent"
-    	target => "useragent"
-  	}
+  if [type] == "items" {
+  # match condition, to aviod messages from different piplines
+    json {
+        source => message
+          }
+    }
 }
 
+##########
+#        #
+# Output #
+#        #
+##########
 output {
-	elasticsearch {
-		hosts => "${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}"
-		user => "logstash"
-		password => "${LOGSTASH_PWD}"
-	}
+  # this configuration is for debuging, this will take the data from the input file and insert it to Orders topic
+  if [type] == "Orders" {
+      # match condition, to aviod messages from different piplines
+    kafka {
+        topic_id => "orders"
+        #should come from system variable
+        bootstrap_servers => "${KAFKA_HOST}:${KAFKA_PORT}"
+        }
+  }
+  if [type] == "items" {
+      # match condition, to aviod messages from different piplines
+    kafka {
+        topic_id => "%{[mid]}"
+        #should come from system variable
+        bootstrap_servers => "${SPLIT_KAFKA_HOST}:${SPLIT_KAFKA_PORT}"
+        }
+
+  } 
 }
 ```
 
@@ -163,4 +127,4 @@ You can find help with logstash configuration [there](https://www.elastic.co/gui
 
 # User Feedback
 ## Issues
-If you have any problems with or questions about this image, please ask for help through a [GitHub issue](https://github.com/Khezen/docker-logstash/issues).
+If you have any problems with or questions about this image, please ask for help through a [GitHub issue](https://github.com/shronny/docker-logstash/issues).
