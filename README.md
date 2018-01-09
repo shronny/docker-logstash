@@ -53,9 +53,7 @@ kafka port.
 
 ```
 #########
-#       #
 # INPUT #
-#       #
 #########
 input {
   # for testing its possible to add line to this specific file
@@ -75,9 +73,7 @@ input {
 }
 
 ##########
-#        #
 # Filter #
-#        #
 ##########
 filter {
   if [type] == "items" {
@@ -89,9 +85,7 @@ filter {
 }
 
 ##########
-#        #
 # Output #
-#        #
 ##########
 output {
   # this configuration is for debuging, this will take the data from the input file and insert it to Orders topic
