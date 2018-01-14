@@ -26,6 +26,15 @@ splitter configuration will create (and send) the data to topic according to mid
 ```
 docker run -d -p 5000:5000 - p 5001:5001 shronny/logstash:latest   
 ```
+## docker compose
+its possible to establish environment with zookeeper, kafka, kafka-manager logstash and graphite.
+
+clone the project, then run
+
+```
+deploy.sh
+```
+to add kafka cluster to kafka-maanger, go to http://localhost:9000, add cluster, zookeeper host is zookeeper:2181
 
 ### [File Descriptors and MMap](https://www.elastic.co/guide/en/elasticsearch/guide/current/_file_descriptors_and_mmap.html)
 
@@ -43,7 +52,7 @@ Defines the maximum memory allocated to logstash.
 ##### ORDERS_KAFKA_HOST | `Orders kafka host `
 kafka host that handle topic orders hostname.
 
-##### SPLIT_KAFKA_HOST | `Orders kafka host `
+##### SPLIT_KAFKA_HOST | `Split topics  kafka host `
 kafka host that handle splitter topics.
 
 ##### KAFKA_PORT | `9092`

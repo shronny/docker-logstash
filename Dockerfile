@@ -23,7 +23,8 @@ EXPOSE 5000
 ENV ORDERS_KAFKA_HOST="34.248.173.194" \
     SPLIT_KAFKA_HOST="34.248.173.194" \
     KAFKA_PORT="9092" \
-    HEAP_SIZE="512m"
+    HEAP_SIZE="512m" \
+    GRAPHITE="graphiteServer""
 
 ENTRYPOINT ["/run/entrypoint.sh"]
 CMD ["logstash", "-f /etc/logstash/conf.d/splitter.conf", "--config.reload.automatic", "--debug"]
