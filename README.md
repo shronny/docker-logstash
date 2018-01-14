@@ -108,12 +108,19 @@ output {
   }
   if [type] == "items" {
       # match condition, to aviod messages from different piplines
+    stdout { codec => rubydebug }
     kafka {
         topic_id => "%{[mid]}"
         #should come from system variable
         bootstrap_servers => "${SPLIT_KAFKA_HOST}:${SPLIT_KAFKA_PORT}"
         }
-
+    graphite {
+        host => "${GRAPHITE}"
+        port => 2003
+        metrics => [
+        "splitter/items/merchantID", "%{[mid]]}",    
+       ]
+    }
   } 
 }
 ```
