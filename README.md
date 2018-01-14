@@ -32,7 +32,7 @@ its possible to establish environment with zookeeper, kafka, kafka-manager logst
 clone the project, then run
 
 ```
-deploy.sh
+docker-compose up -d
 ```
 to add kafka cluster to kafka-maanger, go to http://localhost:9000, add cluster, zookeeper host is zookeeper:2181
 
