@@ -46,17 +46,20 @@ You can set it permanently by modifying `vm.max_map_count` setting in your `/etc
 
 # Environment Variables
 
-##### HEAP_SIZE | `1g`
+##### HEAP_SIZE | `512m`
 Defines the maximum memory allocated to logstash.
 
-##### ORDERS_KAFKA_HOST | `Orders kafka host `
+##### ORDERS_KAFKA_HOST | `kafka `
 kafka host that handle topic orders hostname.
 
-##### SPLIT_KAFKA_HOST | `Split topics  kafka host `
+##### SPLIT_KAFKA_HOST | `kafka`
 kafka host that handle splitter topics.
 
 ##### KAFKA_PORT | `9092`
 kafka port.
+
+#### GRAPHITE | `graphite`
+graphite server.
 
 # Splitter config
 
